@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Default: TriggerGlueJobLambda
+
+Outputs:
+  TriggerGlueJobFunctionArn:
+    Description: "ARN da função Lambda TriggerGlueJobFunction"
+    Value: !GetAtt TriggerGlueJobFunction.Arn  # Referência à ARN da função Lambda
+    Export:
+      Name: TriggerGlueJobFunctionArn  # Nome do export
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaGlueTriggerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:StartJobRun
+                Resource:
+                  - '*'  # Permitir acesso a qualquer Glue Job
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - 'arn:aws:s3:::*'  # Permitir acesso a qualquer bucket S3
+                  - 'arn:aws:s3:::*/*'
+        - PolicyName: LambdaLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*  # Permissões para criar logs no CloudWatch
+
+  TriggerGlueJobFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Handler: lambdahandler.handler  # Atualize o handler para o nome do arquivo
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !ImportValue S3LambdaCodeStorage  # Bucket onde o código está armazenado
+        S3Key: 'app/lambdahandler.zip'  # Caminho para o arquivo ZIP no S3
+      Runtime: python3.8

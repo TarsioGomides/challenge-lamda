@@ -8,9 +8,9 @@ Parameters:
 Outputs:
   TriggerGlueJobFunctionArn:
     Description: "ARN da função Lambda TriggerGlueJobFunction"
-    Value: !GetAtt TriggerGlueJobFunction.Arn  # Referência à ARN da função Lambda
+    Value: !GetAtt TriggerGlueJobFunction.Arn
     Export:
-      Name: TriggerGlueJobFunctionArn  # Nome do export
+      Name: TriggerGlueJobFunctionArn
 
 Resources:
   LambdaExecutionRole:
@@ -32,14 +32,14 @@ Resources:
                 Action:
                   - glue:StartJobRun
                 Resource:
-                  - '*'  # Permitir acesso a qualquer Glue Job
+                  - '*'
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:GetObject
                   - s3:ListBucket
                 Resource:
-                  - 'arn:aws:s3:::*'  # Permitir acesso a qualquer bucket S3
+                  - 'arn:aws:s3:::*'
                   - 'arn:aws:s3:::*/*'
         - PolicyName: LambdaLogsPolicy
           PolicyDocument:
@@ -50,15 +50,15 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*  # Permissões para criar logs no CloudWatch
+                Resource: arn:aws:logs:*:*:* 
 
   TriggerGlueJobFunction:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Ref LambdaFunctionName
-      Handler: lambdahandler.handler  # Atualize o handler para o nome do arquivo
+      Handler: lambdahandler.handler 
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: !ImportValue S3LambdaCodeStorage  # Bucket onde o código está armazenado
-        S3Key: 'app/lambdahandler.zip'  # Caminho para o arquivo ZIP no S3
+        S3Bucket: !ImportValue S3LambdaCodeStorage
+        S3Key: 'app/lambdahandler.zip' 
       Runtime: python3.8
